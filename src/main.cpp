@@ -11,14 +11,14 @@
 using namespace std::experimental;
 
 static std::optional<std::vector<std::byte>> ReadFile(const std::string &path)
-{   
+{
     std::ifstream is{path, std::ios::binary | std::ios::ate};
     if( !is )
         return std::nullopt;
-    
+
     auto size = is.tellg();
-    std::vector<std::byte> contents(size);    
-    
+    std::vector<std::byte> contents(size);
+
     is.seekg(0);
     is.read((char*)contents.data(), size);
 
@@ -28,7 +28,7 @@ static std::optional<std::vector<std::byte>> ReadFile(const std::string &path)
 }
 
 int main(int argc, const char **argv)
-{    
+{
     std::string osm_data_file = "";
     if( argc > 1 ) {
         for( int i = 1; i < argc; ++i )
@@ -40,9 +40,9 @@ int main(int argc, const char **argv)
         std::cout << "Usage: [executable] [-f filename.osm]" << std::endl;
         osm_data_file = "../map.osm";
     }
-    
+
     std::vector<std::byte> osm_data;
- 
+
     if( osm_data.empty() && !osm_data_file.empty() ) {
         std::cout << "Reading OpenStreetMap data from the following file: " <<  osm_data_file << std::endl;
         auto data = ReadFile(osm_data_file);
@@ -51,16 +51,31 @@ int main(int argc, const char **argv)
         else
             osm_data = std::move(*data);
     }
-    
-    // TODO 1: Declare floats `start_x`, `start_y`, `end_x`, and `end_y` and get
-    // user input for these values using std::cin. Pass the user input to the
-    // RoutePlanner object below in place of 10, 10, 90, 90.
 
     // Build Model.
     RouteModel model{osm_data};
 
+    std::cout << "Please input the start and end coordinates.\nThe format required is start_x,start_y,end_x,end_y "
+                 "without spaces and return.\n";
+    std::string user_input;
+    std::getline(std::cin, user_input);
+    std::istringstream input_stream(user_input);
+
+    std::vector<float> input_vector;
+    float value;
+    char delimiter;
+    while (input_stream >> value >> delimiter) {
+        input_vector.push_back(value);
+    }
+    input_vector.push_back(value);
+
+    if (input_vector.size() != 4){
+        std::cout << "Input Error!\n";
+        return -1;
+    }
+
     // Create RoutePlanner object and perform A* search.
-    RoutePlanner route_planner{model, 10, 10, 90, 90};
+    RoutePlanner route_planner{model, input_vector[0], input_vector[1], input_vector[2], input_vector[3]};
     route_planner.AStarSearch();
 
     std::cout << "Distance: " << route_planner.GetDistance() << " meters. \n";
